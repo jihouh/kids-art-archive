@@ -8,10 +8,10 @@ import numpy as np
 from PIL import Image, ImageEnhance
 from google import genai
 
-# --- PAGE CONFIGURATION (Centered Single Page) ---
+# --- PAGE CONFIGURATION ---
 st.set_page_config(page_title="My Art Book 🎨", layout="centered", initial_sidebar_state="collapsed")
 
-# --- CUSTOM CSS: CLEAN STORYBOOK UI ---
+# --- CUSTOM CSS: CLEAN UI (NO BORDER FRAMES) ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
@@ -32,27 +32,6 @@ st.markdown("""
         font-size: 2.2rem;
         font-weight: 700;
         color: #2b1a0e;
-        margin-bottom: 15px;
-    }
-
-    /* Single Book Outer Frame (Cream Paper with Wood Trim) */
-    .book-card-single {
-        background: #fbf6ec;
-        border: 10px solid #6b4423;
-        border-radius: 24px;
-        box-shadow: 0 16px 35px rgba(0,0,0,0.3);
-        padding: 24px;
-        margin: 0 auto 20px auto;
-    }
-
-    /* Framed Artwork Area */
-    .art-paper-frame {
-        background-color: #ffffff;
-        padding: 12px;
-        border-radius: 12px;
-        box-shadow: 0 6px 16px rgba(0,0,0,0.12);
-        border: 1px solid #e0d5c1;
-        margin-top: 10px;
         margin-bottom: 15px;
     }
 
@@ -88,8 +67,8 @@ st.markdown("""
         font-size: 1.25rem;
         font-weight: 700;
         color: #4a3319;
-        margin-top: 10px;
-        margin-bottom: 10px;
+        margin-top: 15px;
+        margin-bottom: 15px;
     }
 
     /* CHUNKY 3D BUTTON STYLING */
@@ -266,9 +245,6 @@ with tab_read:
 
         current_art = metadata[st.session_state.slide_idx]
 
-        # CLEAN STORYBOOK CARD CONTAINER
-        st.markdown("<div class='book-card-single'>", unsafe_allow_html=True)
-        
         # 1. TOP NAVIGATION BUTTONS (BACK, NEXT, SEE ALL)
         btn_col1, btn_col2, btn_col3 = st.columns(3)
         
@@ -294,17 +270,13 @@ with tab_read:
         # 2. PAGE COUNTER
         st.markdown(f"<div class='page-counter-top'>Page {st.session_state.slide_idx + 1} of {len(metadata)}</div>", unsafe_allow_html=True)
 
-        # 3. FRAMED ARTWORK DISPLAY
-        st.markdown("<div class='art-paper-frame'>", unsafe_allow_html=True)
+        # 3. DIRECT ARTWORK DISPLAY
         st.image(current_art["file_path"], use_container_width=True)
-        st.markdown("</div>", unsafe_allow_html=True)
 
         # 4. TITLE, DATE, AND DESCRIPTION BELOW ARTWORK
         st.markdown(f"<div class='art-title-text'>{current_art['title']}</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='art-date-text'><b>Date:</b> {current_art['date']}</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='art-desc-text'><b>Description:</b> {current_art['description']}</div>", unsafe_allow_html=True)
-
-        st.markdown("</div>", unsafe_allow_html=True)
 
 # --- TAB 2: GALLERY VIEW ---
 with tab_gallery:
