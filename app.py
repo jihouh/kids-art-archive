@@ -8,16 +8,16 @@ import numpy as np
 from PIL import Image, ImageEnhance
 from google import genai
 
-# --- PAGE CONFIGURATION (Centered Single Page) ---
+# --- PAGE CONFIGURATION ---
 st.set_page_config(page_title="My Art Book 🎨", layout="centered", initial_sidebar_state="collapsed")
 
-# --- CUSTOM SINGLE-COLUMN CSS STYLING ---
+# --- CUSTOM CSS: EXPLICIT BUTTON & CONTRAST FIXES ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
     
     html, body, [class*="css"] {
-        font-family: 'Fredoka', cursive, sans-serif;
+        font-family: 'Fredoka', cursive, sans-serif !important;
         background-color: #f4ece1 !important;
     }
     
@@ -25,95 +25,113 @@ st.markdown("""
         background-color: #f4ece1 !important;
     }
 
-    /* Single Page Card Frame */
+    /* Single Page Card Container */
     .single-page-card {
-        background-color: #fffdf9;
-        border: 8px solid #8b5a2b;
-        border-radius: 20px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-        padding: 20px;
+        background-color: #ffffff;
+        border: 4px solid #8b5a2b;
+        border-radius: 18px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        padding: 16px;
         margin-top: 10px;
         margin-bottom: 20px;
     }
 
     /* Typography */
     .book-title {
-        font-size: 2.5rem;
+        font-size: 2.2rem;
         font-weight: 700;
-        color: #5c3a21;
+        color: #5c3a21 !important;
         text-align: center;
         margin-bottom: 10px;
     }
 
     .art-title {
         font-size: 1.8rem;
-        color: #2c3e50;
+        color: #2c3e50 !important;
         font-weight: 700;
         margin-top: 15px;
         text-align: center;
     }
 
     .art-meta {
-        font-size: 1.1rem;
-        color: #7f8c8d;
+        font-size: 1rem;
+        color: #7f8c8d !important;
         text-align: center;
         margin-bottom: 10px;
     }
 
     .art-desc {
-        font-size: 1.15rem;
-        color: #34495e;
+        font-size: 1.1rem;
+        color: #34495e !important;
         background-color: #fcf8f2;
         padding: 15px;
         border-radius: 12px;
         border-left: 5px solid #e67e22;
-        margin-top: 10px;
+        margin-top: 15px;
     }
 
     .page-counter {
         text-align: center;
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         font-weight: 700;
-        color: #8b5a2b;
-        padding-top: 8px;
+        color: #8b5a2b !important;
+        line-height: 45px;
     }
 
-    /* Chunky Navigation Buttons */
-    .stButton>button {
-        font-family: 'Fredoka', cursive;
-        font-size: 1.2rem !important;
-        font-weight: 700 !important;
-        border-radius: 16px !important;
-        padding: 10px 15px !important;
+    /* FIX FOR BUTTONS: OVERRIDE ALL STREAMLIT MOBILE DEFAULTS */
+    div.stButton > button {
         width: 100% !important;
-        color: white !important;
+        min-height: 48px !important;
+        height: 48px !important;
+        background-color: #8b5a2b !important;
+        color: #ffffff !important;
+        font-size: 1rem !important;
+        font-weight: 700 !important;
+        border-radius: 12px !important;
         border: none !important;
-        box-shadow: 0 4px 0px rgba(0,0,0,0.2) !important;
-        transition: all 0.1s ease !important;
+        box-shadow: 0 4px 0px #5c3a21 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
     
-    .stButton>button:active {
-        transform: translateY(3px) !important;
-        box-shadow: 0 1px 0px rgba(0,0,0,0.2) !important;
+    div.stButton > button p {
+        color: #ffffff !important;
+        font-size: 1rem !important;
+        font-weight: 700 !important;
+        margin: 0 !important;
     }
-    
-    /* Tab Styling */
+
+    div.stButton > button:active {
+        transform: translateY(2px) !important;
+        box-shadow: 0 1px 0px #5c3a21 !important;
+    }
+
+    /* FIX FOR TABS: HIGH CONTRAST */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 10px;
+        gap: 8px;
         justify-content: center;
     }
 
     .stTabs [data-baseweb="tab"] {
-        font-size: 1.1rem !important;
+        font-size: 1rem !important;
         font-weight: 600 !important;
         border-radius: 10px 10px 0 0 !important;
         background-color: #e6d7c3 !important;
-        padding: 8px 16px !important;
+        padding: 8px 14px !important;
+    }
+
+    .stTabs [data-baseweb="tab"] p {
+        color: #3d2314 !important;
+        font-weight: 700 !important;
     }
 
     .stTabs [aria-selected="true"] {
         background-color: #8b5a2b !important;
-        color: white !important;
+    }
+
+    .stTabs [aria-selected="true"] p {
+        color: #ffffff !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -207,7 +225,7 @@ def analyze_artwork_with_gemini(pil_image, max_retries=3):
                     time.sleep(wait_time)
                     continue
             
-            st.warning("⚠️ Gemini server is temporarily busy. Applied standard template so you can keep going!")
+            st.warning("⚠️ Gemini server is busy right now. Used standard template so you can keep going!")
             return "My Masterpiece", "Made with paint and love!"
 
 # --- UI HEADER ---
@@ -234,13 +252,13 @@ with tab1:
         # 1. NAVIGATION BAR ABOVE IMAGE
         nav_col1, nav_col2, nav_col3 = st.columns([1, 1.2, 1])
         with nav_col1:
-            if st.button("⬅️ BACK", key="single_back"):
+            if st.button("⬅️ BACK", key="nav_back_single"):
                 st.session_state.slide_idx = (st.session_state.slide_idx - 1) % len(metadata)
                 st.rerun()
         with nav_col2:
             st.markdown(f"<div class='page-counter'>Page {st.session_state.slide_idx + 1} of {len(metadata)}</div>", unsafe_allow_html=True)
         with nav_col3:
-            if st.button("NEXT ➡️", key="single_next"):
+            if st.button("NEXT ➡️", key="nav_next_single"):
                 st.session_state.slide_idx = (st.session_state.slide_idx + 1) % len(metadata)
                 st.rerun()
 
@@ -248,8 +266,6 @@ with tab1:
 
         # 2. CENTERED IMAGE
         st.image(current_art["file_path"], use_container_width=True)
-
-        st.write("")
 
         # 3. TITLE, DATE, AND STORY BELOW IMAGE
         st.markdown(f"<div class='art-title'>{current_art['title']}</div>", unsafe_allow_html=True)
