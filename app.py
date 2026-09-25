@@ -8,10 +8,10 @@ import numpy as np
 from PIL import Image, ImageEnhance
 from google import genai
 
-# --- PAGE CONFIGURATION ---
-st.set_page_config(page_title="My Art Book 🎨", layout="wide", initial_sidebar_state="collapsed")
+# --- PAGE CONFIGURATION (Centered Single Page) ---
+st.set_page_config(page_title="My Art Book 🎨", layout="centered", initial_sidebar_state="collapsed")
 
-# --- CUSTOM DIGITAL BOOK CSS STYLING ---
+# --- CUSTOM SINGLE-COLUMN CSS STYLING ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
@@ -25,97 +25,90 @@ st.markdown("""
         background-color: #f4ece1 !important;
     }
 
-    /* Book Frame Container */
-    .book-container {
+    /* Single Page Card Frame */
+    .single-page-card {
         background-color: #fffdf9;
-        border: 12px solid #8b5a2b;
-        border-radius: 24px;
-        box-shadow: 0 15px 30px rgba(0,0,0,0.2), inset 0 0 15px rgba(0,0,0,0.08);
-        padding: 30px;
+        border: 8px solid #8b5a2b;
+        border-radius: 20px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        padding: 20px;
         margin-top: 10px;
-        position: relative;
-    }
-    
-    /* Center Spine Effect */
-    .book-spine {
-        border-right: 4px dashed #d1c2a5;
-        padding-right: 25px;
-    }
-    
-    .book-page-right {
-        padding-left: 25px;
-    }
-
-    /* Artwork Paper Card */
-    .art-frame {
-        background: #ffffff;
-        padding: 15px;
-        border-radius: 12px;
-        box-shadow: 0 8px 16px rgba(0,0,0,0.12);
-        border: 1px solid #e2d7c5;
+        margin-bottom: 20px;
     }
 
     /* Typography */
     .book-title {
-        font-size: 2.8rem;
+        font-size: 2.5rem;
         font-weight: 700;
         color: #5c3a21;
         text-align: center;
-        margin-bottom: 5px;
+        margin-bottom: 10px;
     }
 
     .art-title {
-        font-size: 2rem;
+        font-size: 1.8rem;
         color: #2c3e50;
         font-weight: 700;
         margin-top: 15px;
+        text-align: center;
     }
 
     .art-meta {
         font-size: 1.1rem;
         color: #7f8c8d;
+        text-align: center;
+        margin-bottom: 10px;
     }
 
     .art-desc {
-        font-size: 1.2rem;
+        font-size: 1.15rem;
         color: #34495e;
         background-color: #fcf8f2;
-        padding: 12px;
-        border-radius: 10px;
+        padding: 15px;
+        border-radius: 12px;
         border-left: 5px solid #e67e22;
         margin-top: 10px;
     }
 
-    /* Kid-Friendly Chunky Buttons */
+    .page-counter {
+        text-align: center;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #8b5a2b;
+        padding-top: 8px;
+    }
+
+    /* Chunky Navigation Buttons */
     .stButton>button {
         font-family: 'Fredoka', cursive;
-        font-size: 1.4rem !important;
+        font-size: 1.2rem !important;
         font-weight: 700 !important;
-        border-radius: 18px !important;
-        padding: 12px 20px !important;
+        border-radius: 16px !important;
+        padding: 10px 15px !important;
+        width: 100% !important;
         color: white !important;
         border: none !important;
-        box-shadow: 0 6px 0px rgba(0,0,0,0.2) !important;
+        box-shadow: 0 4px 0px rgba(0,0,0,0.2) !important;
         transition: all 0.1s ease !important;
     }
     
     .stButton>button:active {
-        transform: translateY(4px) !important;
-        box-shadow: 0 2px 0px rgba(0,0,0,0.2) !important;
+        transform: translateY(3px) !important;
+        box-shadow: 0 1px 0px rgba(0,0,0,0.2) !important;
     }
     
     /* Tab Styling */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 15px;
+        gap: 10px;
         justify-content: center;
     }
 
     .stTabs [data-baseweb="tab"] {
-        font-size: 1.3rem !important;
+        font-size: 1.1rem !important;
         font-weight: 600 !important;
-        border-radius: 12px 12px 0 0 !important;
+        border-radius: 10px 10px 0 0 !important;
         background-color: #e6d7c3 !important;
-        padding: 10px 20px !important;
+        padding: 8px 16px !important;
     }
 
     .stTabs [aria-selected="true"] {
@@ -174,12 +167,8 @@ def process_upload(uploaded_file):
     final_pil.save(save_path)
     return final_pil, filename, save_path
 
-# --- GEMINI AI ANALYSIS FUNCTION WITH RETRY LOGIC ---
+# --- GEMINI AI ANALYSIS FUNCTION ---
 def analyze_artwork_with_gemini(pil_image, max_retries=3):
-    """
-    Uses Gemini to generate a title and short story for children's artwork.
-    Includes exponential backoff retry to handle temporary 503 capacity errors gracefully.
-    """
     api_key = os.getenv("GEMINI_API_KEY")
     
     if not api_key and "GEMINI_API_KEY" in st.secrets:
@@ -226,7 +215,7 @@ st.markdown("<div class='book-title'>📖 My Art Book 🎨</div>", unsafe_allow_
 
 tab1, tab2, tab3 = st.tabs(["📖 Read Art Book", "🖼️ View Gallery", "➕ Add New Page"])
 
-# --- TAB 1: DIGITAL STORYBOOK MODE ---
+# --- TAB 1: SINGLE-COLUMN PAGE MODE ---
 with tab1:
     metadata = load_metadata()
     if not metadata:
@@ -240,39 +229,32 @@ with tab1:
 
         current_art = metadata[st.session_state.slide_idx]
 
-        # Render Open Book Container
-        st.markdown("<div class='book-container'>", unsafe_allow_html=True)
-        left_col, right_col = st.columns([1.1, 0.9])
+        st.markdown("<div class='single-page-card'>", unsafe_allow_html=True)
+        
+        # 1. NAVIGATION BAR ABOVE IMAGE
+        nav_col1, nav_col2, nav_col3 = st.columns([1, 1.2, 1])
+        with nav_col1:
+            if st.button("⬅️ BACK", key="single_back"):
+                st.session_state.slide_idx = (st.session_state.slide_idx - 1) % len(metadata)
+                st.rerun()
+        with nav_col2:
+            st.markdown(f"<div class='page-counter'>Page {st.session_state.slide_idx + 1} of {len(metadata)}</div>", unsafe_allow_html=True)
+        with nav_col3:
+            if st.button("NEXT ➡️", key="single_next"):
+                st.session_state.slide_idx = (st.session_state.slide_idx + 1) % len(metadata)
+                st.rerun()
 
-        # Left Page: Artwork Display
-        with left_col:
-            st.markdown("<div class='book-spine'>", unsafe_allow_html=True)
-            st.image(current_art["file_path"], use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
+        st.write("")
 
-        # Right Page: Title, Story & Kid Controls
-        with right_col:
-            st.markdown("<div class='book-page-right'>", unsafe_allow_html=True)
-            st.markdown(f"<div class='art-title'>{current_art['title']}</div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='art-meta'><b>Date:</b> {current_art['date']}</div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='art-desc'><b>Story:</b><br>{current_art['description']}</div>", unsafe_allow_html=True)
-            
-            st.write("")
-            st.write("")
-            
-            # Big Kid-Friendly Navigation Buttons
-            btn_col1, btn_col2 = st.columns(2)
-            with btn_col1:
-                if st.button("🔴 BACK", key="back_btn"):
-                    st.session_state.slide_idx = (st.session_state.slide_idx - 1) % len(metadata)
-                    st.rerun()
-            with btn_col2:
-                if st.button("🟢 NEXT", key="next_btn"):
-                    st.session_state.slide_idx = (st.session_state.slide_idx + 1) % len(metadata)
-                    st.rerun()
+        # 2. CENTERED IMAGE
+        st.image(current_art["file_path"], use_container_width=True)
 
-            st.markdown(f"<h4 style='text-align: center; color: #8b5a2b; margin-top: 15px;'>Page {st.session_state.slide_idx + 1} of {len(metadata)}</h4>", unsafe_allow_html=True)
-            st.markdown("</div>", unsafe_allow_html=True)
+        st.write("")
+
+        # 3. TITLE, DATE, AND STORY BELOW IMAGE
+        st.markdown(f"<div class='art-title'>{current_art['title']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='art-meta'>Date: {current_art['date']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='art-desc'><b>Story:</b><br>{current_art['description']}</div>", unsafe_allow_html=True)
 
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -280,13 +262,12 @@ with tab1:
 with tab2:
     metadata = load_metadata()
     if metadata:
-        cols = st.columns(3)
+        cols = st.columns(2)
         for idx, item in enumerate(metadata):
-            with cols[idx % 3]:
-                st.markdown("<div class='art-frame'>", unsafe_allow_html=True)
-                st.image(item["file_path"], use_container_width=True)
-                st.markdown(f"<b>{item['title']}</b><br><small>{item['date']}</small>", unsafe_allow_html=True)
-                st.markdown("</div><br>", unsafe_allow_html=True)
+            with cols[idx % 2]:
+                with st.container(border=True):
+                    st.image(item["file_path"], use_container_width=True)
+                    st.markdown(f"<b>{item['title']}</b><br><small>{item['date']}</small>", unsafe_allow_html=True)
 
 # --- TAB 3: UPLOAD & NEW PAGE ---
 with tab3:
