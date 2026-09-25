@@ -1,0 +1,9 @@
+# Ignore Streamlit secrets
+.streamlit/secrets.toml
+
+# Ignore local processing cache and environment files
+.env
+__pycache__/
+*.pyc
+processed_art/
+art_metadata.json
