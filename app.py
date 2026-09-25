@@ -6,7 +6,7 @@ import os
 import json
 from datetime import date
 
-# Page Setup - Configured for responsive view
+# Page Setup
 st.set_page_config(page_title="My Art Book 🎨", layout="centered", initial_sidebar_state="collapsed")
 
 # File Storage Setup
@@ -58,67 +58,111 @@ def process_upload(uploaded_file):
     final_pil.save(save_path)
     return filename, save_path
 
-# --- RESPONSIVE SINGLE-PAGE CSS ---
+# --- CROSS-PLATFORM & iOS SAFARI CSS FIXES ---
 st.markdown("""
     <style>
-    /* Background & Main Container */
+    /* Force Light Theme Colors across iOS & Android */
+    :root {
+        color-scheme: light !important;
+    }
+
     .stApp {
-        background-color: #F7F3E9;
+        background-color: #F7F3E9 !important;
+        color: #2C2C2C !important;
     }
     
-    /* Child-friendly Typography */
-    h1, h2, h3, p, div {
-        font-family: 'Comic Sans MS', 'Chalkboard SE', 'Fredoka', cursive, sans-serif !important;
+    /* System Typography Fix for iOS Safari */
+    h1, h2, h3, h4, h5, h6, p, label, span, div {
+        color: #3D2314 !important;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif !important;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    .main-title {
+        text-align: center;
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: #3D2314 !important;
+        margin-bottom: 12px;
     }
 
     /* Page Counter Styling */
     .page-counter {
         text-align: center;
-        font-size: 1.3rem;
-        font-weight: bold;
-        color: #7F5A3C;
-        margin-top: 10px;
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: #8B4513 !important;
+        line-height: 48px; /* Vertically center with buttons on mobile */
     }
 
-    /* Big Responsive Touch Buttons Above Image */
+    /* PREVENT COLUMN STACKING ON iOS SAFARI */
+    [data-testid="column"] {
+        width: 33.33% !important;
+        flex: 1 1 33.33% !important;
+        min-width: auto !important;
+    }
+
+    /* Chunky iOS Touch Buttons */
     div.stButton > button {
         width: 100% !important;
-        height: 55px !important;
-        font-size: 1.3rem !important;
+        height: 48px !important;
+        background-color: #4A2E1B !important;
+        color: #FFFFFF !important;
+        font-size: 1rem !important;
         font-weight: bold !important;
-        border-radius: 16px !important;
-        border: 2px solid #5A3E2B !important;
-        box-shadow: 0px 4px 0px #5A3E2B !important;
-        cursor: pointer !important;
-        margin-bottom: 5px;
+        border-radius: 12px !important;
+        border: none !important;
+        box-shadow: 0px 3px 0px #2C1A0E !important;
+        -webkit-appearance: none !important; /* Disables default iOS styling */
     }
-    div.stButton > button:active {
-        transform: translateY(3px) !important;
-        box-shadow: 0px 1px 0px #5A3E2B !important;
+    
+    div.stButton > button p {
+        color: #FFFFFF !important;
+        font-size: 1rem !important;
+        font-weight: bold !important;
     }
 
-    /* Tab Layout Tweaks */
+    div.stButton > button:active {
+        transform: translateY(2px) !important;
+        box-shadow: 0px 1px 0px #2C1A0E !important;
+    }
+
+    /* Tab Layout Formatting */
     .stTabs [data-baseweb="tab-list"] {
         justify-content: center;
-        gap: 10px;
+        gap: 6px;
     }
     .stTabs [data-baseweb="tab"] {
-        font-size: 1.1rem !important;
-        font-weight: bold !important;
+        background-color: #E6D7C3 !important;
+        border-radius: 8px 8px 0 0 !important;
+        padding: 8px 12px !important;
+    }
+    .stTabs [data-baseweb="tab"] p {
+        color: #3D2314 !important;
+        font-weight: 700 !important;
+        font-size: 0.95rem !important;
+    }
+    
+    /* Card Container */
+    [data-testid="stVerticalBlockBorderWrapper"] {
+        background-color: #FFFFFF !important;
+        border-radius: 16px !important;
+        padding: 12px !important;
+        border: 2px solid #E2D7C5 !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
 # Main Title
-st.title("📖 My Art Book 🎨")
+st.markdown("<div class='main-title'>📖 My Art Book 🎨</div>", unsafe_allow_html=True)
 
-tab1, tab2, tab3 = st.tabs(["📖 Read Book", "🖼️ View Gallery", "➕ Add New Page"])
+tab1, tab2, tab3 = st.tabs(["📖 Read Book", "🖼️ Gallery", "➕ Add Page"])
 
 # --- TAB 1: SINGLE-PAGE STORYBOOK ---
 with tab1:
     metadata = load_metadata()
     if not metadata:
-        st.info("The art book is currently empty! Click 'Add New Page' to upload artwork.")
+        st.info("The art book is currently empty! Click 'Add Page' to upload artwork.")
     else:
         if "slide_idx" not in st.session_state:
             st.session_state.slide_idx = 0
@@ -130,8 +174,8 @@ with tab1:
 
         # Single Card Frame Container
         with st.container(border=True):
-            # 1. NAVIGATION CONTROLS (ABOVE IMAGE)
-            nav_left, nav_mid, nav_right = st.columns([1, 1.2, 1])
+            # 1. NAVIGATION CONTROLS (LOCKED SIDE-BY-SIDE FOR MOBILE SAFARI)
+            nav_left, nav_mid, nav_right = st.columns([1, 1, 1])
             
             with nav_left:
                 if st.button("⬅️ BACK", key="prev_page_single"):
@@ -139,7 +183,7 @@ with tab1:
                     st.rerun()
 
             with nav_mid:
-                st.markdown(f"<div class='page-counter'>Page {st.session_state.slide_idx + 1} of {len(metadata)}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='page-counter'>{st.session_state.slide_idx + 1} / {len(metadata)}</div>", unsafe_allow_html=True)
 
             with nav_right:
                 if st.button("NEXT ➡️", key="next_page_single"):
@@ -154,7 +198,7 @@ with tab1:
             st.write("")
 
             # 3. DESCRIPTION & DETAILS BELOW IMAGE
-            st.markdown(f"## **{current_art['title']}**")
+            st.markdown(f"### **{current_art['title']}**")
             st.markdown(f"📅 **Date:** {current_art['date']}")
             st.markdown("---")
             st.markdown("**Story / Description:**")
@@ -174,7 +218,7 @@ with tab2:
 
 # --- TAB 3: UPLOAD & NEW PAGE ---
 with tab3:
-    st.header("Add a New Page to the Book")
+    st.header("Add a New Page")
     uploaded_file = st.file_uploader("Snap or select a photo of the artwork", type=["jpg", "jpeg", "png"])
     
     if uploaded_file:
