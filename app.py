@@ -6,8 +6,8 @@ import os
 import json
 from datetime import date
 
-# Page Setup
-st.set_page_config(page_title="My Art Book 🎨", layout="wide", initial_sidebar_state="collapsed")
+# Page Setup - Configured for responsive view
+st.set_page_config(page_title="My Art Book 🎨", layout="centered", initial_sidebar_state="collapsed")
 
 # File Storage Setup
 IMAGE_DIR = "processed_art"
@@ -58,54 +58,63 @@ def process_upload(uploaded_file):
     final_pil.save(save_path)
     return filename, save_path
 
-# --- CLEAN CSS OVERRIDES ---
+# --- RESPONSIVE SINGLE-PAGE CSS ---
 st.markdown("""
     <style>
-    /* Overall Background */
+    /* Background & Main Container */
     .stApp {
         background-color: #F7F3E9;
     }
     
-    /* Global Font & Header */
+    /* Child-friendly Typography */
     h1, h2, h3, p, div {
         font-family: 'Comic Sans MS', 'Chalkboard SE', 'Fredoka', cursive, sans-serif !important;
     }
-    
-    /* Clean Tab Styling */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 10px;
+
+    /* Page Counter Styling */
+    .page-counter {
+        text-align: center;
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: #7F5A3C;
+        margin-top: 10px;
     }
-    .stTabs [data-baseweb="tab"] {
-        padding: 8px 16px !important;
-        font-size: 1.1rem !important;
-        font-weight: bold !important;
-        border-radius: 10px 10px 0 0 !important;
-    }
-    
-    /* Big Kid Buttons */
+
+    /* Big Responsive Touch Buttons Above Image */
     div.stButton > button {
         width: 100% !important;
-        height: 60px !important;
-        font-size: 1.4rem !important;
+        height: 55px !important;
+        font-size: 1.3rem !important;
         font-weight: bold !important;
-        border-radius: 15px !important;
+        border-radius: 16px !important;
         border: 2px solid #5A3E2B !important;
         box-shadow: 0px 4px 0px #5A3E2B !important;
         cursor: pointer !important;
+        margin-bottom: 5px;
     }
     div.stButton > button:active {
         transform: translateY(3px) !important;
         box-shadow: 0px 1px 0px #5A3E2B !important;
     }
+
+    /* Tab Layout Tweaks */
+    .stTabs [data-baseweb="tab-list"] {
+        justify-content: center;
+        gap: 10px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        font-size: 1.1rem !important;
+        font-weight: bold !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# Application Title
+# Main Title
 st.title("📖 My Art Book 🎨")
 
 tab1, tab2, tab3 = st.tabs(["📖 Read Book", "🖼️ View Gallery", "➕ Add New Page"])
 
-# --- TAB 1: STORYBOOK MODE ---
+# --- TAB 1: SINGLE-PAGE STORYBOOK ---
 with tab1:
     metadata = load_metadata()
     if not metadata:
@@ -119,50 +128,45 @@ with tab1:
 
         current_art = metadata[st.session_state.slide_idx]
 
-        # Book Border Wrapper
+        # Single Card Frame Container
         with st.container(border=True):
-            col_left, col_spine, col_right = st.columns([1.1, 0.05, 0.9])
+            # 1. NAVIGATION CONTROLS (ABOVE IMAGE)
+            nav_left, nav_mid, nav_right = st.columns([1, 1.2, 1])
+            
+            with nav_left:
+                if st.button("⬅️ BACK", key="prev_page_single"):
+                    st.session_state.slide_idx = (st.session_state.slide_idx - 1) % len(metadata)
+                    st.rerun()
 
-            # Left Page: Artwork
-            with col_left:
-                st.image(current_art["file_path"], use_container_width=True)
+            with nav_mid:
+                st.markdown(f"<div class='page-counter'>Page {st.session_state.slide_idx + 1} of {len(metadata)}</div>", unsafe_allow_html=True)
 
-            # Center Spine Visual
-            with col_spine:
-                st.markdown("<div style='border-right: 3px dashed #D1C2A5; height: 100%; min-height: 400px; margin: 0 auto;'></div>", unsafe_allow_html=True)
+            with nav_right:
+                if st.button("NEXT ➡️", key="next_page_single"):
+                    st.session_state.slide_idx = (st.session_state.slide_idx + 1) % len(metadata)
+                    st.rerun()
 
-            # Right Page: Metadata & Kid Controls
-            with col_right:
-                st.markdown(f"## **{current_art['title']}**")
-                st.markdown(f"📅 **Date:** {current_art['date']}")
-                st.markdown("---")
-                st.markdown(f"**Story:**")
-                st.info(current_art['description'])
-                
-                st.write("")
-                st.write("")
+            st.write("")
 
-                # Large Touch Buttons
-                btn_left, btn_right = st.columns(2)
-                with btn_left:
-                    if st.button("⬅️ BACK", key="prev_page"):
-                        st.session_state.slide_idx = (st.session_state.slide_idx - 1) % len(metadata)
-                        st.rerun()
+            # 2. CENTERED ARTWORK PHOTO
+            st.image(current_art["file_path"], use_container_width=True)
 
-                with btn_right:
-                    if st.button("NEXT ➡️", key="next_page"):
-                        st.session_state.slide_idx = (st.session_state.slide_idx + 1) % len(metadata)
-                        st.rerun()
+            st.write("")
 
-                st.markdown(f"<h4 style='text-align: center; color: #7F5A3C; margin-top: 15px;'>Page {st.session_state.slide_idx + 1} of {len(metadata)}</h4>", unsafe_allow_html=True)
+            # 3. DESCRIPTION & DETAILS BELOW IMAGE
+            st.markdown(f"## **{current_art['title']}**")
+            st.markdown(f"📅 **Date:** {current_art['date']}")
+            st.markdown("---")
+            st.markdown("**Story / Description:**")
+            st.info(current_art['description'])
 
 # --- TAB 2: GALLERY VIEW ---
 with tab2:
     metadata = load_metadata()
     if metadata:
-        cols = st.columns(3)
+        cols = st.columns(2)
         for idx, item in enumerate(metadata):
-            with cols[idx % 3]:
+            with cols[idx % 2]:
                 with st.container(border=True):
                     st.image(item["file_path"], use_container_width=True)
                     st.markdown(f"**{item['title']}**")
