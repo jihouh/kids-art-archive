@@ -11,7 +11,11 @@ from google import genai
 # --- PAGE CONFIGURATION ---
 st.set_page_config(page_title="My Art Book 🎨", layout="centered", initial_sidebar_state="collapsed")
 
-# --- CUSTOM CSS: CLEAN UI (NO BORDER FRAMES) ---
+# Initialize Active Navigation State
+if "current_tab" not in st.session_state:
+    st.session_state.current_tab = "📖 Read Book"
+
+# --- CUSTOM CSS: CLEAN UI ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
@@ -119,27 +123,6 @@ st.markdown("""
         background-color: #2b84cb !important;
         box-shadow: 0 6px 0 #1b588a !important;
     }
-
-    /* High Contrast Navigation Tabs */
-    .stTabs [data-baseweb="tab-list"] {
-        justify-content: center;
-        gap: 8px;
-    }
-    .stTabs [data-baseweb="tab"] {
-        font-size: 1.05rem !important;
-        font-weight: 700 !important;
-        border-radius: 10px 10px 0 0 !important;
-        background-color: #c0a47d !important;
-    }
-    .stTabs [data-baseweb="tab"] p {
-        color: #382413 !important;
-    }
-    .stTabs [aria-selected="true"] {
-        background-color: #6b4423 !important;
-    }
-    .stTabs [aria-selected="true"] p {
-        color: #ffffff !important;
-    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -227,15 +210,26 @@ def analyze_artwork_with_gemini(pil_image, max_retries=3):
 # --- HEADER ---
 st.markdown("<div class='app-header'>My Art Book 🎨</div>", unsafe_allow_html=True)
 
-# Navigation Tabs
-tab_read, tab_gallery, tab_add = st.tabs(["📖 Read Book", "🖼️ Gallery", "➕ Add Page"])
+# Custom Top Navigation Pills synced with Session State
+selected_tab = st.pills(
+    options=["📖 Read Book", "🖼️ Gallery", "➕ Add Page"],
+    label="",
+    selection_mode="single",
+    default=st.session_state.current_tab,
+    key="nav_pills"
+)
 
-# --- TAB 1: SINGLE-PAGE STORYBOOK VIEW ---
-with tab_read:
+# Update session state if pill selection changes
+if selected_tab and selected_tab != st.session_state.current_tab:
+    st.session_state.current_tab = selected_tab
+    st.rerun()
+
+# --- VIEW 1: SINGLE-PAGE STORYBOOK VIEW ---
+if st.session_state.current_tab == "📖 Read Book":
     metadata = load_metadata()
     
     if not metadata:
-        st.info("Your art book is empty right now. Go to 'Add Page' to upload artwork!")
+        st.info("Your art book is empty right now. Switch to '➕ Add Page' to upload artwork!")
     else:
         if "slide_idx" not in st.session_state:
             st.session_state.slide_idx = 0
@@ -260,12 +254,8 @@ with tab_read:
 
         with btn_col3:
             if st.button("🖼️\nSEE ALL", key="top_see_all_btn"):
-                st.session_state.go_to_gallery = True
+                st.session_state.current_tab = "🖼️ Gallery"
                 st.rerun()
-
-        if st.session_state.get("go_to_gallery", False):
-            st.session_state.go_to_gallery = False
-            st.info("👇 Click the '🖼️ Gallery' tab above to view all artwork pages!")
 
         # 2. PAGE COUNTER
         st.markdown(f"<div class='page-counter-top'>Page {st.session_state.slide_idx + 1} of {len(metadata)}</div>", unsafe_allow_html=True)
@@ -278,10 +268,13 @@ with tab_read:
         st.markdown(f"<div class='art-date-text'><b>Date:</b> {current_art['date']}</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='art-desc-text'><b>Description:</b> {current_art['description']}</div>", unsafe_allow_html=True)
 
-# --- TAB 2: GALLERY VIEW ---
-with tab_gallery:
+# --- VIEW 2: GALLERY VIEW ---
+elif st.session_state.current_tab == "🖼️ Gallery":
     metadata = load_metadata()
-    if metadata:
+    if not metadata:
+        st.info("No artwork in gallery yet. Add some pages first!")
+    else:
+        st.markdown("### All Artwork Pages 🎨")
         cols = st.columns(2)
         for idx, item in enumerate(metadata):
             with cols[idx % 2]:
@@ -289,9 +282,15 @@ with tab_gallery:
                     st.image(item["file_path"], use_container_width=True)
                     st.markdown(f"**{item['title']}**")
                     st.caption(f"Date: {item['date']}")
+                    
+                    # Clicking opens this item in book view
+                    if st.button(f"📖 Read Page {idx+1}", key=f"open_art_{idx}"):
+                        st.session_state.slide_idx = idx
+                        st.session_state.current_tab = "📖 Read Book"
+                        st.rerun()
 
-# --- TAB 3: UPLOAD & NEW PAGE ---
-with tab_add:
+# --- VIEW 3: UPLOAD & NEW PAGE ---
+elif st.session_state.current_tab == "➕ Add Page":
     st.header("Add Artwork to the Book")
     uploaded_file = st.file_uploader("Choose a photo of the artwork", type=["jpg", "jpeg", "png"])
     
@@ -312,5 +311,8 @@ with tab_add:
                     "description": ai_desc
                 })
                 save_metadata(metadata)
+                st.session_state.slide_idx = len(metadata) - 1
+                st.session_state.current_tab = "📖 Read Book"
                 st.success("Added to your art book!")
                 st.balloons()
+                st.rerun()
