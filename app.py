@@ -8,135 +8,174 @@ import numpy as np
 from PIL import Image, ImageEnhance
 from google import genai
 
-# --- PAGE CONFIGURATION ---
+# --- PAGE CONFIGURATION (Centered Single Page) ---
 st.set_page_config(page_title="My Art Book 🎨", layout="centered", initial_sidebar_state="collapsed")
 
-# --- CUSTOM CSS: EXPLICIT BUTTON & CONTRAST FIXES ---
+# --- CUSTOM CSS: SINGLE PAGE WITH STORYBOOK LOOK & FEEL ---
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
     
     html, body, [class*="css"] {
-        font-family: 'Fredoka', cursive, sans-serif !important;
-        background-color: #f4ece1 !important;
+        font-family: 'Comic Neue', cursive, sans-serif !important;
+        background-color: #d1b894 !important;
     }
     
     .main {
-        background-color: #f4ece1 !important;
+        background-color: #d1b894 !important;
+        padding-top: 10px !important;
     }
 
-    /* Single Page Card Container */
-    .single-page-card {
+    /* Header Title */
+    .app-header {
+        text-align: center;
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #2b1a0e;
+        margin-bottom: 15px;
+    }
+
+    /* Single Book Outer Frame (Cream Paper with Wood Trim) */
+    .book-card-single {
+        background: #fbf6ec;
+        border: 10px solid #6b4423;
+        border-radius: 24px;
+        box-shadow: 0 16px 35px rgba(0,0,0,0.3);
+        padding: 20px;
+        margin: 0 auto 20px auto;
+        position: relative;
+    }
+
+    /* Framed Artwork Area */
+    .art-paper-frame {
         background-color: #ffffff;
-        border: 4px solid #8b5a2b;
-        border-radius: 18px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-        padding: 16px;
+        padding: 12px;
+        border-radius: 12px;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+        border: 1px solid #e0d5c1;
         margin-top: 10px;
+        margin-bottom: 15px;
+    }
+
+    /* Storybook Typography */
+    .art-title-text {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #000000;
+        margin-top: 10px;
+        margin-bottom: 4px;
+        line-height: 1.1;
+    }
+
+    .art-date-text {
+        font-size: 1.1rem;
+        color: #333333;
+        margin-bottom: 8px;
+    }
+
+    .art-desc-text {
+        font-size: 1.25rem;
+        color: #111111;
+        line-height: 1.35;
+        background-color: #fdfaf3;
+        padding: 12px 15px;
+        border-radius: 10px;
+        border-left: 4px solid #6b4423;
         margin-bottom: 20px;
     }
 
-    /* Typography */
-    .book-title {
-        font-size: 2.2rem;
+    .page-counter-center {
+        text-align: center;
+        font-size: 1.25rem;
         font-weight: 700;
-        color: #5c3a21 !important;
-        text-align: center;
-        margin-bottom: 10px;
-    }
-
-    .art-title {
-        font-size: 1.8rem;
-        color: #2c3e50 !important;
-        font-weight: 700;
-        margin-top: 15px;
-        text-align: center;
-    }
-
-    .art-meta {
-        font-size: 1rem;
-        color: #7f8c8d !important;
-        text-align: center;
-        margin-bottom: 10px;
-    }
-
-    .art-desc {
-        font-size: 1.1rem;
-        color: #34495e !important;
-        background-color: #fcf8f2;
-        padding: 15px;
-        border-radius: 12px;
-        border-left: 5px solid #e67e22;
+        color: #4a3319;
         margin-top: 15px;
     }
 
-    .page-counter {
-        text-align: center;
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #8b5a2b !important;
-        line-height: 45px;
-    }
-
-    /* FIX FOR BUTTONS: OVERRIDE ALL STREAMLIT MOBILE DEFAULTS */
+    /* CHUNKY 3D BUTTON STYLING FROM MOCKUP */
     div.stButton > button {
+        font-family: 'Comic Neue', cursive !important;
         width: 100% !important;
-        min-height: 48px !important;
-        height: 48px !important;
-        background-color: #8b5a2b !important;
-        color: #ffffff !important;
-        font-size: 1rem !important;
+        min-height: 75px !important;
+        font-size: 1.1rem !important;
         font-weight: 700 !important;
-        border-radius: 12px !important;
+        border-radius: 18px !important;
         border: none !important;
-        box-shadow: 0 4px 0px #5c3a21 !important;
+        color: #ffffff !important;
         display: flex !important;
+        flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
+        cursor: pointer !important;
+        transition: transform 0.1s ease !important;
     }
-    
+
     div.stButton > button p {
         color: #ffffff !important;
-        font-size: 1rem !important;
+        font-size: 1.1rem !important;
         font-weight: 700 !important;
         margin: 0 !important;
     }
 
     div.stButton > button:active {
-        transform: translateY(2px) !important;
-        box-shadow: 0 1px 0px #5c3a21 !important;
+        transform: translateY(4px) !important;
+        box-shadow: none !important;
     }
 
-    /* FIX FOR TABS: HIGH CONTRAST */
+    /* Color Specific 3D Action Buttons */
+    /* Back Button (Red) */
+    div[data-testid="stHorizontalBlock"] > div:nth-child(1) div.stButton > button {
+        background-color: #d94338 !important;
+        box-shadow: 0 7px 0 #9e2a22 !important;
+    }
+
+    /* Next Button (Green) */
+    div[data-testid="stHorizontalBlock"] > div:nth-child(2) div.stButton > button {
+        background-color: #63b33a !important;
+        box-shadow: 0 7px 0 #437d26 !important;
+    }
+
+    /* See All / Gallery Button (Blue) */
+    div[data-testid="stHorizontalBlock"] > div:nth-child(3) div.stButton > button {
+        background-color: #2b84cb !important;
+        box-shadow: 0 7px 0 #1b588a !important;
+    }
+
+    /* Close Book Button (Wooden Style) */
+    .close-btn-container div.stButton > button {
+        background-color: #dfbe91 !important;
+        box-shadow: 0 6px 0 #a38258 !important;
+        min-height: 60px !important;
+        border: 2px solid #b29165 !important;
+    }
+    .close-btn-container div.stButton > button p {
+        color: #701c13 !important;
+    }
+
+    /* High Contrast Navigation Tabs */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
         justify-content: center;
+        gap: 8px;
     }
-
     .stTabs [data-baseweb="tab"] {
-        font-size: 1rem !important;
-        font-weight: 600 !important;
-        border-radius: 10px 10px 0 0 !important;
-        background-color: #e6d7c3 !important;
-        padding: 8px 14px !important;
-    }
-
-    .stTabs [data-baseweb="tab"] p {
-        color: #3d2314 !important;
+        font-size: 1.05rem !important;
         font-weight: 700 !important;
+        border-radius: 10px 10px 0 0 !important;
+        background-color: #c0a47d !important;
     }
-
+    .stTabs [data-baseweb="tab"] p {
+        color: #382413 !important;
+    }
     .stTabs [aria-selected="true"] {
-        background-color: #8b5a2b !important;
+        background-color: #6b4423 !important;
     }
-
     .stTabs [aria-selected="true"] p {
         color: #ffffff !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# --- FILE STORAGE SETUP ---
+# --- FILE STORAGE INITIALIZATION ---
 IMAGE_DIR = "processed_art"
 DB_FILE = "art_metadata.json"
 os.makedirs(IMAGE_DIR, exist_ok=True)
@@ -185,23 +224,21 @@ def process_upload(uploaded_file):
     final_pil.save(save_path)
     return final_pil, filename, save_path
 
-# --- GEMINI AI ANALYSIS FUNCTION ---
+# --- GEMINI AI ANALYSIS ---
 def analyze_artwork_with_gemini(pil_image, max_retries=3):
     api_key = os.getenv("GEMINI_API_KEY")
-    
     if not api_key and "GEMINI_API_KEY" in st.secrets:
         api_key = st.secrets["GEMINI_API_KEY"]
         
     if not api_key:
-        st.warning("⚠️ GEMINI_API_KEY not found. Using default title and description.")
-        return "My Masterpiece", "Made with paint and love!"
+        return "Rainbow Dino", "Me and a dino under the rainbow!"
 
     client = genai.Client(api_key=api_key)
     prompt = (
-        "Analyze this child's artwork or craft piece. Provide a JSON response with exactly two keys:\n"
-        "1. 'title': A short, fun, creative title suitable for a child's art book (max 5 words).\n"
-        "2. 'description': A warm, encouraging 1-2 sentence story describing what is shown in the artwork.\n"
-        "Respond ONLY with valid JSON."
+        "Analyze this child's artwork. Provide a JSON response with two keys:\n"
+        "1. 'title': A short, playful title (max 4 words).\n"
+        "2. 'description': A simple, cheerful sentence describing the drawing.\n"
+        "Respond ONLY in valid JSON."
     )
 
     for attempt in range(max_retries):
@@ -209,35 +246,28 @@ def analyze_artwork_with_gemini(pil_image, max_retries=3):
             response = client.models.generate_content(
                 model='gemini-3.8-flash',
                 contents=[pil_image, prompt],
-                config={
-                    'response_mime_type': 'application/json'
-                }
+                config={'response_mime_type': 'application/json'}
             )
-            
             result = json.loads(response.text)
-            return result.get("title", "My Masterpiece"), result.get("description", "Made with paint and love!")
-            
-        except Exception as e:
-            error_str = str(e)
-            if "503" in error_str or "UNAVAILABLE" in error_str:
-                if attempt < max_retries - 1:
-                    wait_time = (2 ** attempt) + 1
-                    time.sleep(wait_time)
-                    continue
-            
-            st.warning("⚠️ Gemini server is busy right now. Used standard template so you can keep going!")
-            return "My Masterpiece", "Made with paint and love!"
+            return result.get("title", "Rainbow Dino"), result.get("description", "Me and a dino under the rainbow!")
+        except Exception:
+            if attempt < max_retries - 1:
+                time.sleep((2 ** attempt) + 1)
+                continue
+            return "Rainbow Dino", "Me and a dino under the rainbow!"
 
-# --- UI HEADER ---
-st.markdown("<div class='book-title'>📖 My Art Book 🎨</div>", unsafe_allow_html=True)
+# --- HEADER ---
+st.markdown("<div class='app-header'>My Art Book 🎨</div>", unsafe_allow_html=True)
 
-tab1, tab2, tab3 = st.tabs(["📖 Read Art Book", "🖼️ View Gallery", "➕ Add New Page"])
+# Navigation Tabs
+tab_read, tab_gallery, tab_add = st.tabs(["📖 Read Book", "🖼️ Gallery", "➕ Add Page"])
 
-# --- TAB 1: SINGLE-COLUMN PAGE MODE ---
-with tab1:
+# --- TAB 1: SINGLE-PAGE STORYBOOK VIEW ---
+with tab_read:
     metadata = load_metadata()
+    
     if not metadata:
-        st.info("The art book is currently empty! Click 'Add New Page' to upload the first artwork.")
+        st.info("Your art book is empty right now. Go to 'Add Page' to upload artwork!")
     else:
         if "slide_idx" not in st.session_state:
             st.session_state.slide_idx = 0
@@ -247,35 +277,51 @@ with tab1:
 
         current_art = metadata[st.session_state.slide_idx]
 
-        st.markdown("<div class='single-page-card'>", unsafe_allow_html=True)
+        # SINGLE STORYBOOK CARD CONTAINER
+        st.markdown("<div class='book-card-single'>", unsafe_allow_html=True)
         
-        # 1. NAVIGATION BAR ABOVE IMAGE
-        nav_col1, nav_col2, nav_col3 = st.columns([1, 1.2, 1])
-        with nav_col1:
-            if st.button("⬅️ BACK", key="nav_back_single"):
+        # 1. TOP HEADER ROW (CLOSE BOOK BUTTON)
+        close_col1, close_col2 = st.columns([2.5, 1])
+        with close_col2:
+            st.markdown("<div class='close-btn-container'>", unsafe_allow_html=True)
+            if st.button("✖️\nClose Book", key="single_close_btn"):
+                st.info("Switch to the 'Gallery' tab at the top to view all pages!")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        # 2. FRAMED ARTWORK DISPLAY
+        st.markdown("<div class='art-paper-frame'>", unsafe_allow_html=True)
+        st.image(current_art["file_path"], use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        # 3. TITLE, DATE, AND DESCRIPTION BELOW ARTWORK
+        st.markdown(f"<div class='art-title-text'>{current_art['title']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='art-date-text'><b>Date:</b> {current_art['date']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='art-desc-text'><b>Description:</b> {current_art['description']}</div>", unsafe_allow_html=True)
+
+        # 4. CHUNKY 3D NAVIGATION BUTTONS
+        btn_col1, btn_col2, btn_col3 = st.columns(3)
+        
+        with btn_col1:
+            if st.button("⬅️\nBACK", key="single_back_btn"):
                 st.session_state.slide_idx = (st.session_state.slide_idx - 1) % len(metadata)
                 st.rerun()
-        with nav_col2:
-            st.markdown(f"<div class='page-counter'>Page {st.session_state.slide_idx + 1} of {len(metadata)}</div>", unsafe_allow_html=True)
-        with nav_col3:
-            if st.button("NEXT ➡️", key="nav_next_single"):
+
+        with btn_col2:
+            if st.button("➡️\nNEXT", key="single_next_btn"):
                 st.session_state.slide_idx = (st.session_state.slide_idx + 1) % len(metadata)
                 st.rerun()
 
-        st.write("")
+        with btn_col3:
+            if st.button("🖼️\nSEE ALL", key="single_see_all_btn"):
+                st.info("Switch to the 'Gallery' tab at the top to view all pages!")
 
-        # 2. CENTERED IMAGE
-        st.image(current_art["file_path"], use_container_width=True)
-
-        # 3. TITLE, DATE, AND STORY BELOW IMAGE
-        st.markdown(f"<div class='art-title'>{current_art['title']}</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='art-meta'>Date: {current_art['date']}</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='art-desc'><b>Story:</b><br>{current_art['description']}</div>", unsafe_allow_html=True)
+        # 5. PAGE COUNTER AT BOTTOM CENTER
+        st.markdown(f"<div class='page-counter-center'>Page {st.session_state.slide_idx + 1} of {len(metadata)}</div>", unsafe_allow_html=True)
 
         st.markdown("</div>", unsafe_allow_html=True)
 
 # --- TAB 2: GALLERY VIEW ---
-with tab2:
+with tab_gallery:
     metadata = load_metadata()
     if metadata:
         cols = st.columns(2)
@@ -283,44 +329,30 @@ with tab2:
             with cols[idx % 2]:
                 with st.container(border=True):
                     st.image(item["file_path"], use_container_width=True)
-                    st.markdown(f"<b>{item['title']}</b><br><small>{item['date']}</small>", unsafe_allow_html=True)
+                    st.markdown(f"**{item['title']}**")
+                    st.caption(f"Date: {item['date']}")
 
 # --- TAB 3: UPLOAD & NEW PAGE ---
-with tab3:
-    st.header("Add a New Page to the Book")
-    uploaded_file = st.file_uploader("Snap or select a photo of the artwork", type=["jpg", "jpeg", "png"])
+with tab_add:
+    st.header("Add Artwork to the Book")
+    uploaded_file = st.file_uploader("Choose a photo of the artwork", type=["jpg", "jpeg", "png"])
     
     if uploaded_file:
         art_date = st.date_input("Date Created", value=date.today())
         
-        if st.button("✨ Auto-Clean & Analyze with AI"):
-            with st.spinner("Cleaning image and asking Gemini AI for story ideas..."):
+        if st.button("✨ Clean Up & Add Page"):
+            with st.spinner("Processing image and crafting story..."):
                 final_pil, filename, save_path = process_upload(uploaded_file)
-                ai_title, ai_description = analyze_artwork_with_gemini(final_pil)
+                ai_title, ai_desc = analyze_artwork_with_gemini(final_pil)
                 
-                st.session_state.temp_art = {
-                    "filename": filename,
-                    "save_path": save_path,
-                    "title": ai_title,
-                    "description": ai_description,
-                    "date": str(art_date)
-                }
-
-        if "temp_art" in st.session_state:
-            st.subheader("Review Page Details")
-            title = st.text_input("Artwork Title", value=st.session_state.temp_art["title"])
-            desc = st.text_area("Story / Description", value=st.session_state.temp_art["description"])
-            
-            if st.button("📖 Save to Art Book"):
                 metadata = load_metadata()
                 metadata.append({
-                    "filename": st.session_state.temp_art["filename"],
-                    "file_path": st.session_state.temp_art["save_path"],
-                    "title": title,
-                    "date": st.session_state.temp_art["date"],
-                    "description": desc
+                    "filename": filename,
+                    "file_path": save_path,
+                    "title": ai_title,
+                    "date": str(art_date),
+                    "description": ai_desc
                 })
                 save_metadata(metadata)
-                del st.session_state["temp_art"]
-                st.success("Page added to the book!")
+                st.success("Added to your art book!")
                 st.balloons()
