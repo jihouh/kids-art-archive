@@ -11,7 +11,7 @@ from google import genai
 # --- PAGE CONFIGURATION (Centered Single Page) ---
 st.set_page_config(page_title="My Art Book 🎨", layout="centered", initial_sidebar_state="collapsed")
 
-# --- CUSTOM CSS: SINGLE PAGE WITH STORYBOOK LOOK & FEEL ---
+# --- CUSTOM CSS: CLEAN STORYBOOK UI ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
@@ -41,9 +41,8 @@ st.markdown("""
         border: 10px solid #6b4423;
         border-radius: 24px;
         box-shadow: 0 16px 35px rgba(0,0,0,0.3);
-        padding: 20px;
+        padding: 24px;
         margin: 0 auto 20px auto;
-        position: relative;
     }
 
     /* Framed Artwork Area */
@@ -81,22 +80,23 @@ st.markdown("""
         padding: 12px 15px;
         border-radius: 10px;
         border-left: 4px solid #6b4423;
-        margin-bottom: 20px;
+        margin-bottom: 10px;
     }
 
-    .page-counter-center {
+    .page-counter-top {
         text-align: center;
         font-size: 1.25rem;
         font-weight: 700;
         color: #4a3319;
-        margin-top: 15px;
+        margin-top: 10px;
+        margin-bottom: 10px;
     }
 
-    /* CHUNKY 3D BUTTON STYLING FROM MOCKUP */
+    /* CHUNKY 3D BUTTON STYLING */
     div.stButton > button {
         font-family: 'Comic Neue', cursive !important;
         width: 100% !important;
-        min-height: 75px !important;
+        min-height: 65px !important;
         font-size: 1.1rem !important;
         font-weight: 700 !important;
         border-radius: 18px !important;
@@ -126,30 +126,19 @@ st.markdown("""
     /* Back Button (Red) */
     div[data-testid="stHorizontalBlock"] > div:nth-child(1) div.stButton > button {
         background-color: #d94338 !important;
-        box-shadow: 0 7px 0 #9e2a22 !important;
+        box-shadow: 0 6px 0 #9e2a22 !important;
     }
 
     /* Next Button (Green) */
     div[data-testid="stHorizontalBlock"] > div:nth-child(2) div.stButton > button {
         background-color: #63b33a !important;
-        box-shadow: 0 7px 0 #437d26 !important;
+        box-shadow: 0 6px 0 #437d26 !important;
     }
 
     /* See All / Gallery Button (Blue) */
     div[data-testid="stHorizontalBlock"] > div:nth-child(3) div.stButton > button {
         background-color: #2b84cb !important;
-        box-shadow: 0 7px 0 #1b588a !important;
-    }
-
-    /* Close Book Button (Wooden Style) */
-    .close-btn-container div.stButton > button {
-        background-color: #dfbe91 !important;
-        box-shadow: 0 6px 0 #a38258 !important;
-        min-height: 60px !important;
-        border: 2px solid #b29165 !important;
-    }
-    .close-btn-container div.stButton > button p {
-        color: #701c13 !important;
+        box-shadow: 0 6px 0 #1b588a !important;
     }
 
     /* High Contrast Navigation Tabs */
@@ -277,46 +266,43 @@ with tab_read:
 
         current_art = metadata[st.session_state.slide_idx]
 
-        # SINGLE STORYBOOK CARD CONTAINER
+        # CLEAN STORYBOOK CARD CONTAINER
         st.markdown("<div class='book-card-single'>", unsafe_allow_html=True)
         
-        # 1. TOP HEADER ROW (CLOSE BOOK BUTTON)
-        close_col1, close_col2 = st.columns([2.5, 1])
-        with close_col2:
-            st.markdown("<div class='close-btn-container'>", unsafe_allow_html=True)
-            if st.button("✖️\nClose Book", key="single_close_btn"):
-                st.info("Switch to the 'Gallery' tab at the top to view all pages!")
-            st.markdown("</div>", unsafe_allow_html=True)
-
-        # 2. FRAMED ARTWORK DISPLAY
-        st.markdown("<div class='art-paper-frame'>", unsafe_allow_html=True)
-        st.image(current_art["file_path"], use_container_width=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-
-        # 3. TITLE, DATE, AND DESCRIPTION BELOW ARTWORK
-        st.markdown(f"<div class='art-title-text'>{current_art['title']}</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='art-date-text'><b>Date:</b> {current_art['date']}</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='art-desc-text'><b>Description:</b> {current_art['description']}</div>", unsafe_allow_html=True)
-
-        # 4. CHUNKY 3D NAVIGATION BUTTONS
+        # 1. TOP NAVIGATION BUTTONS (BACK, NEXT, SEE ALL)
         btn_col1, btn_col2, btn_col3 = st.columns(3)
         
         with btn_col1:
-            if st.button("⬅️\nBACK", key="single_back_btn"):
+            if st.button("⬅️\nBACK", key="top_back_btn"):
                 st.session_state.slide_idx = (st.session_state.slide_idx - 1) % len(metadata)
                 st.rerun()
 
         with btn_col2:
-            if st.button("➡️\nNEXT", key="single_next_btn"):
+            if st.button("➡️\nNEXT", key="top_next_btn"):
                 st.session_state.slide_idx = (st.session_state.slide_idx + 1) % len(metadata)
                 st.rerun()
 
         with btn_col3:
-            if st.button("🖼️\nSEE ALL", key="single_see_all_btn"):
-                st.info("Switch to the 'Gallery' tab at the top to view all pages!")
+            if st.button("🖼️\nSEE ALL", key="top_see_all_btn"):
+                st.session_state.go_to_gallery = True
+                st.rerun()
 
-        # 5. PAGE COUNTER AT BOTTOM CENTER
-        st.markdown(f"<div class='page-counter-center'>Page {st.session_state.slide_idx + 1} of {len(metadata)}</div>", unsafe_allow_html=True)
+        if st.session_state.get("go_to_gallery", False):
+            st.session_state.go_to_gallery = False
+            st.info("👇 Click the '🖼️ Gallery' tab above to view all artwork pages!")
+
+        # 2. PAGE COUNTER
+        st.markdown(f"<div class='page-counter-top'>Page {st.session_state.slide_idx + 1} of {len(metadata)}</div>", unsafe_allow_html=True)
+
+        # 3. FRAMED ARTWORK DISPLAY
+        st.markdown("<div class='art-paper-frame'>", unsafe_allow_html=True)
+        st.image(current_art["file_path"], use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        # 4. TITLE, DATE, AND DESCRIPTION BELOW ARTWORK
+        st.markdown(f"<div class='art-title-text'>{current_art['title']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='art-date-text'><b>Date:</b> {current_art['date']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='art-desc-text'><b>Description:</b> {current_art['description']}</div>", unsafe_allow_html=True)
 
         st.markdown("</div>", unsafe_allow_html=True)
 
