@@ -57,7 +57,8 @@ def enhance_art(img):
     return pil_img
 
 def process_upload(uploaded_file):
-    file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=uint8) if 'uint8' in globals() else np.frombuffer(uploaded_file.read(), np.uint8)
+    # Read image buffer into numpy array safely
+    file_bytes = np.frombuffer(uploaded_file.read(), np.uint8)
     img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
     
     # Process
@@ -84,10 +85,14 @@ with tab1:
         if "slide_idx" not in st.session_state:
             st.session_state.slide_idx = 0
 
+        # Prevent out-of-bounds index
+        if st.session_state.slide_idx >= len(metadata):
+            st.session_state.slide_idx = 0
+
         current_art = metadata[st.session_state.slide_idx]
         
-        # Display image
-        st.image(current_art["file_path"], use_column_width=True)
+        # Display image with updated parameter
+        st.image(current_art["file_path"], use_container_width=True)
         st.markdown(f"### **{current_art['title']}** ({current_art['date']})")
         st.write(f"*{current_art['description']}*")
         
@@ -111,7 +116,7 @@ with tab2:
         cols = st.columns(3)
         for idx, item in enumerate(metadata):
             with cols[idx % 3]:
-                st.image(item["file_path"], use_column_width=True)
+                st.image(item["file_path"], use_container_width=True)
                 st.caption(f"**{item['title']}** - {item['date']}")
 
 # --- TAB 3: UPLOAD & CLEANUP ---
@@ -138,3 +143,4 @@ with tab3:
             })
             save_metadata(metadata)
             st.success("Artwork digitized and added to your collection!")
+            st.balloons()
