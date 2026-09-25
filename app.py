@@ -15,7 +15,7 @@ st.set_page_config(page_title="My Art Book 🎨", layout="centered", initial_sid
 if "current_tab" not in st.session_state:
     st.session_state.current_tab = "📖 Read Book"
 
-# --- CUSTOM CSS: CLEAN UI ---
+# --- CUSTOM CSS: LARGE CHILD-FRIENDLY UI ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
@@ -33,10 +33,19 @@ st.markdown("""
     /* Header Title */
     .app-header {
         text-align: center;
-        font-size: 2.2rem;
+        font-size: 2.6rem;
         font-weight: 700;
         color: #2b1a0e;
         margin-bottom: 15px;
+    }
+
+    /* LARGER TOP NAVIGATION PILLS (Read Book, Gallery, Add Page) */
+    div[data-testid="stSegmentedControl"] button {
+        font-family: 'Comic Neue', cursive !important;
+        font-size: 1.35rem !important;
+        font-weight: 700 !important;
+        padding: 12px 24px !important;
+        border-radius: 14px !important;
     }
 
     /* Storybook Typography */
@@ -44,49 +53,51 @@ st.markdown("""
         font-size: 2.2rem;
         font-weight: 700;
         color: #000000;
-        margin-top: 10px;
+        margin-top: 15px;
         margin-bottom: 4px;
         line-height: 1.1;
     }
 
     .art-date-text {
-        font-size: 1.1rem;
+        font-size: 1.18rem;
         color: #333333;
         margin-bottom: 8px;
     }
 
     .art-desc-text {
-        font-size: 1.25rem;
+        font-size: 1.35rem;
         color: #111111;
         line-height: 1.35;
         background-color: #fdfaf3;
-        padding: 12px 15px;
-        border-radius: 10px;
-        border-left: 4px solid #6b4423;
+        padding: 14px 18px;
+        border-radius: 12px;
+        border-left: 5px solid #6b4423;
         margin-bottom: 10px;
     }
 
-    .page-counter-top {
-        text-align: center;
-        font-size: 1.25rem;
+    /* CENTERED ALIGNED PAGE COUNTER */
+    .page-counter-inline {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        font-size: 1.5rem;
         font-weight: 700;
-        color: #4a3319;
-        margin-top: 15px;
-        margin-bottom: 15px;
+        color: #382413;
+        text-align: center;
     }
 
-    /* CHUNKY 3D BUTTON STYLING */
+    /* ENLARGED CHUNKY 3D PREVIOUS / NEXT BUTTONS */
     div.stButton > button {
         font-family: 'Comic Neue', cursive !important;
         width: 100% !important;
-        min-height: 65px !important;
-        font-size: 1.1rem !important;
+        min-height: 70px !important;
+        font-size: 1.35rem !important;
         font-weight: 700 !important;
         border-radius: 18px !important;
         border: none !important;
         color: #ffffff !important;
         display: flex !important;
-        flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
         cursor: pointer !important;
@@ -95,7 +106,7 @@ st.markdown("""
 
     div.stButton > button p {
         color: #ffffff !important;
-        font-size: 1.1rem !important;
+        font-size: 1.35rem !important;
         font-weight: 700 !important;
         margin: 0 !important;
     }
@@ -106,22 +117,16 @@ st.markdown("""
     }
 
     /* Color Specific 3D Action Buttons */
-    /* Back Button (Red) */
+    /* Previous / Back Button (Red) */
     div[data-testid="stHorizontalBlock"] > div:nth-child(1) div.stButton > button {
         background-color: #d94338 !important;
         box-shadow: 0 6px 0 #9e2a22 !important;
     }
 
     /* Next Button (Green) */
-    div[data-testid="stHorizontalBlock"] > div:nth-child(2) div.stButton > button {
+    div[data-testid="stHorizontalBlock"] > div:nth-child(3) div.stButton > button {
         background-color: #63b33a !important;
         box-shadow: 0 6px 0 #437d26 !important;
-    }
-
-    /* See All / Gallery Button (Blue) */
-    div[data-testid="stHorizontalBlock"] > div:nth-child(3) div.stButton > button {
-        background-color: #2b84cb !important;
-        box-shadow: 0 6px 0 #1b588a !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -239,31 +244,31 @@ if st.session_state.current_tab == "📖 Read Book":
 
         current_art = metadata[st.session_state.slide_idx]
 
-        # 1. TOP NAVIGATION BUTTONS (BACK, NEXT, SEE ALL)
-        btn_col1, btn_col2, btn_col3 = st.columns(3)
+        # 1. HORIZONTAL ALIGNED NAVIGATION: Previous | Page X of Y | Next
+        btn_col1, counter_col, btn_col2 = st.columns([1, 1.2, 1])
         
         with btn_col1:
-            if st.button("⬅️\nBACK", key="top_back_btn"):
+            if st.button("⬅️ Previous", key="prev_btn"):
                 st.session_state.slide_idx = (st.session_state.slide_idx - 1) % len(metadata)
                 st.rerun()
 
+        with counter_col:
+            st.markdown(
+                f"<div class='page-counter-inline'>Page {st.session_state.slide_idx + 1} of {len(metadata)}</div>", 
+                unsafe_allow_html=True
+            )
+
         with btn_col2:
-            if st.button("➡️\nNEXT", key="top_next_btn"):
+            if st.button("Next ➡️", key="next_btn"):
                 st.session_state.slide_idx = (st.session_state.slide_idx + 1) % len(metadata)
                 st.rerun()
 
-        with btn_col3:
-            if st.button("🖼️\nSEE ALL", key="top_see_all_btn"):
-                st.session_state.current_tab = "🖼️ Gallery"
-                st.rerun()
+        st.markdown("<br>", unsafe_allow_html=True)
 
-        # 2. PAGE COUNTER
-        st.markdown(f"<div class='page-counter-top'>Page {st.session_state.slide_idx + 1} of {len(metadata)}</div>", unsafe_allow_html=True)
-
-        # 3. DIRECT ARTWORK DISPLAY
+        # 2. ARTWORK DISPLAY
         st.image(current_art["file_path"], use_container_width=True)
 
-        # 4. TITLE, DATE, AND DESCRIPTION BELOW ARTWORK
+        # 3. TITLE, DATE, AND DESCRIPTION
         st.markdown(f"<div class='art-title-text'>{current_art['title']}</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='art-date-text'><b>Date:</b> {current_art['date']}</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='art-desc-text'><b>Description:</b> {current_art['description']}</div>", unsafe_allow_html=True)
@@ -283,7 +288,6 @@ elif st.session_state.current_tab == "🖼️ Gallery":
                     st.markdown(f"**{item['title']}**")
                     st.caption(f"Date: {item['date']}")
                     
-                    # Clicking opens this item in book view
                     if st.button(f"📖 Read Page {idx+1}", key=f"open_art_{idx}"):
                         st.session_state.slide_idx = idx
                         st.session_state.current_tab = "📖 Read Book"
