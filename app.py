@@ -1,5 +1,6 @@
 import os
 import json
+import time
 from datetime import date
 import streamlit as st
 import cv2
@@ -173,9 +174,12 @@ def process_upload(uploaded_file):
     final_pil.save(save_path)
     return final_pil, filename, save_path
 
-# --- GEMINI AI ANALYSIS FUNCTION ---
-def analyze_artwork_with_gemini(pil_image):
-    """Uses Gemini to generate a creative title and short story for children's artwork."""
+# --- GEMINI AI ANALYSIS FUNCTION WITH RETRY LOGIC ---
+def analyze_artwork_with_gemini(pil_image, max_retries=3):
+    """
+    Uses Gemini to generate a title and short story for children's artwork.
+    Includes exponential backoff retry to handle temporary 503 capacity errors gracefully.
+    """
     api_key = os.getenv("GEMINI_API_KEY")
     
     if not api_key and "GEMINI_API_KEY" in st.secrets:
@@ -185,30 +189,37 @@ def analyze_artwork_with_gemini(pil_image):
         st.warning("⚠️ GEMINI_API_KEY not found. Using default title and description.")
         return "My Masterpiece", "Made with paint and love!"
 
-    try:
-        client = genai.Client(api_key=api_key)
-        
-        prompt = (
-            "Analyze this child's artwork or craft piece. Provide a JSON response with exactly two keys:\n"
-            "1. 'title': A short, fun, creative title suitable for a child's art book (max 5 words).\n"
-            "2. 'description': A warm, encouraging 1-2 sentence story describing what is shown in the artwork.\n"
-            "Respond ONLY with valid JSON."
-        )
+    client = genai.Client(api_key=api_key)
+    prompt = (
+        "Analyze this child's artwork or craft piece. Provide a JSON response with exactly two keys:\n"
+        "1. 'title': A short, fun, creative title suitable for a child's art book (max 5 words).\n"
+        "2. 'description': A warm, encouraging 1-2 sentence story describing what is shown in the artwork.\n"
+        "Respond ONLY with valid JSON."
+    )
 
-        response = client.models.generate_content(
-            model='gemini-3.8-flash',
-            contents=[pil_image, prompt],
-            config={
-                'response_mime_type': 'application/json'
-            }
-        )
-        
-        result = json.loads(response.text)
-        return result.get("title", "My Masterpiece"), result.get("description", "Made with paint and love!")
-        
-    except Exception as e:
-        st.error(f"AI Analysis Error: {e}")
-        return "My Masterpiece", "Made with paint and love!"
+    for attempt in range(max_retries):
+        try:
+            response = client.models.generate_content(
+                model='gemini-3.8-flash',
+                contents=[pil_image, prompt],
+                config={
+                    'response_mime_type': 'application/json'
+                }
+            )
+            
+            result = json.loads(response.text)
+            return result.get("title", "My Masterpiece"), result.get("description", "Made with paint and love!")
+            
+        except Exception as e:
+            error_str = str(e)
+            if "503" in error_str or "UNAVAILABLE" in error_str:
+                if attempt < max_retries - 1:
+                    wait_time = (2 ** attempt) + 1
+                    time.sleep(wait_time)
+                    continue
+            
+            st.warning("⚠️ Gemini server is temporarily busy. Applied standard template so you can keep going!")
+            return "My Masterpiece", "Made with paint and love!"
 
 # --- UI HEADER ---
 st.markdown("<div class='book-title'>📖 My Art Book 🎨</div>", unsafe_allow_html=True)
